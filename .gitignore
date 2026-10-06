@@ -1,0 +1,5 @@
+# Informes generados: contienen información sensible del equipo
+informe*
+*.json
+!docs/*.json
+*.log

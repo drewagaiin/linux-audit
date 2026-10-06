@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Análisis estático
+        run: shellcheck --severity=style audit.sh
+
+  test:
+    name: Pruebas en ${{ matrix.image }}
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - kalilinux/kali-rolling
+          - debian:12
+          - ubuntu:24.04
+          - ubuntu:22.04
+    container: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar dependencias de prueba
+        run: |
+          apt-get update -q
+          DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
+            bats jq procps iproute2 util-linux findutils passwd sudo cron openssh-server
+
+      - name: Pruebas de interfaz y formatos
+        run: bats tests/cli.bats
+
+      - name: Pruebas de detección (contenedor desechable)
+        env:
+          LINUX_AUDIT_DESTRUCTIVE_TESTS: "1"
+        run: bats tests/detection.bats
+
+      - name: Generar informe de ejemplo
+        run: ./audit.sh --format html -o informe.html || true
+
+      - name: Guardar informe como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: informe-${{ strategy.job-index }}
+          path: informe.html
+          retention-days: 7
