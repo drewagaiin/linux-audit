@@ -2,6 +2,13 @@
 
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el proyecto usa [versionado semántico](https://semver.org/lang/es/).
 
+## [2.1.1] - 2026-10-06
+
+### Corregido
+- CI: aviso SC2002 de ShellCheck 0.9/0.10 (versiones de GitHub Actions) que la
+  0.11 ya no reporta. El script se valida ahora con las tres versiones.
+- CI: `actions/checkout@v5` (la v4 usaba Node.js 20, ya obsoleto).
+
 ## [2.1.0] - 2026-10-06
 
 Revisión completa contra el **CIS Ubuntu Linux 24.04 Benchmark** para que el

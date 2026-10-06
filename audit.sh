@@ -25,7 +25,7 @@ umask 077
 # para que los escapes HTML (&lt; &amp;) funcionen igual en todas las versiones.
 shopt -u patsub_replacement 2>/dev/null || true
 
-readonly VERSION="2.1.0"
+readonly VERSION="2.1.1"
 
 # --- Opciones -----------------------------------------------------------------
 FORMAT="text"        # text | json | html
@@ -549,7 +549,7 @@ check_upd() {
     # UPD-004 Reinicio pendiente (kernel o librerías parcheadas sin cargar)
     if [[ -f /var/run/reboot-required ]]; then
         record UPD-004 WARN medium "Reinicio pendiente para aplicar parches" \
-            "$(cat /var/run/reboot-required.pkgs 2>/dev/null | join_list 6)" \
+            "$( { join_list 6 < /var/run/reboot-required.pkgs; } 2>/dev/null )" \
             "Programa un reinicio: sudo reboot" "$ref"
     else
         record UPD-004 PASS medium "No hay reinicio pendiente" "" "" "$ref"
