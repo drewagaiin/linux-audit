@@ -2,6 +2,14 @@
 
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el proyecto usa [versionado semántico](https://semver.org/lang/es/).
 
+## [2.1.2] - 2026-10-06
+
+### Corregido
+- **FS-002 a FS-007 no recorrían el disco principal cuando "/" no es ext4/xfs/btrfs**
+  (por ejemplo overlay en contenedores Docker o zfs). Los SUID peligrosos en
+  `/usr/local` pasaban desapercibidos. Lo detectó el CI en Kali, Debian y Ubuntu.
+  Ahora "/" se recorre siempre.
+
 ## [2.1.1] - 2026-10-06
 
 ### Corregido

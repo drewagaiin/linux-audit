@@ -25,7 +25,7 @@ umask 077
 # para que los escapes HTML (&lt; &amp;) funcionen igual en todas las versiones.
 shopt -u patsub_replacement 2>/dev/null || true
 
-readonly VERSION="2.1.1"
+readonly VERSION="2.1.2"
 
 # --- Opciones -----------------------------------------------------------------
 FORMAT="text"        # text | json | html
@@ -1130,6 +1130,24 @@ cp mv python python2 python3 perl ruby php lua node nmap awk gawk mawk env tar z
 ncat netcat socat docker systemctl base64 tee dd sed openssl gdb strace taskset xargs time \
 busybox git ed rsync scp tclsh expect make man journalctl watch ionice nice chroot install"
 
+# Sistemas de archivos que se recorren buscando SUID y permisos inseguros.
+# "/" SIEMPRE se incluye: en contenedores y algunos servidores es overlay o zfs,
+# y si solo se listaran tipos como ext4 se saltaría el disco principal entero.
+# /tmp, /var/tmp y /dev/shm suelen ser tmpfs: son justo donde un atacante deja
+# sus binarios, así que también se recorren. No se recorren discos de red.
+scan_mounts() {
+    local tm
+    {
+        echo /
+        findmnt -rn -o TARGET -t ext2,ext3,ext4,xfs,btrfs,f2fs,jfs,reiserfs,zfs,overlay 2>/dev/null
+        for tm in /tmp /var/tmp /dev/shm; do
+            if [[ "$(findmnt -n -o TARGET --target "$tm" 2>/dev/null | tail -n1)" == "$tm" ]]; then
+                echo "$tm"
+            fi
+        done
+    } | awk 'NF && !seen[$0]++'
+}
+
 in_list() { [[ " $2 " == *" $1 "* ]]; }
 
 check_fs() {
@@ -1170,14 +1188,7 @@ check_fs() {
         done
     else
         local mounts
-        mounts=$(findmnt -rn -o TARGET -t ext2,ext3,ext4,xfs,btrfs,f2fs,jfs,reiserfs,zfs 2>/dev/null)
-        [[ -z "$mounts" ]] && mounts="/"
-        # /tmp, /var/tmp y /dev/shm suelen ser tmpfs (en Kali y Debian 13 /tmp lo es):
-        # son justo donde un atacante deja sus binarios, así que también se recorren.
-        local tm
-        for tm in /tmp /var/tmp /dev/shm; do
-            [[ "$(findmnt -n -o TARGET --target "$tm" 2>/dev/null | tail -n1)" == "$tm" ]] && mounts+=$'\n'"$tm"
-        done
+        mounts=$(scan_mounts)
         local scan
         # -print0 / read -d '' soportan nombres de archivo con saltos de línea
         scan=$(
