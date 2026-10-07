@@ -3,3 +3,4 @@ informe*
 *.json
 !docs/*.json
 *.log
+APRENDE.md
